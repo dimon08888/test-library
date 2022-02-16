@@ -13,16 +13,19 @@ function App() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setIsLoading(true);
     fetch(`https://www.googleapis.com/books/v1/volumes?q=${search}&key=${apiKey}`)
       .then(response => response.json())
-      .then(data => setBooks(data));
+      .then(data => setBooks(data))
+      .finally(() => setIsLoading(false));
   }
 
   return (
-    <div>
+    <div className="h-screen flex flex-col">
       <header className="header">
         <h1 className="header-title text-white text-center font-bold text-xl py-3">
           Search for books
@@ -39,7 +42,7 @@ function App() {
               onChange={e => setSearch(e.target.value)}
               value={search}
             />
-            <button className="py-2 bg-white rounded-r-md w-[10%]">
+            <button type="submit" className="py-2 bg-white rounded-r-md w-[10%]">
               <i className="fa fa-search" aria-hidden="true"></i>
             </button>
           </div>
@@ -78,6 +81,11 @@ function App() {
         </form>
       </header>
       {books && <Books books={books} />}
+      {isLoading && (
+        <div className="flex-grow grid place-items-center">
+          <div className="loader"></div>
+        </div>
+      )}
     </div>
   );
 }
