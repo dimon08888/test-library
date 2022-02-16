@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { APIResponse } from './types';
 import './App.css';
 
@@ -84,16 +84,28 @@ function App() {
 
 function Books({ books }: { books: APIResponse }) {
   return (
-    <div>
-      <div>Founds {books.totalItems} results</div>
-      {books.items.map(book => (
-        <div>
-          <h3>{book.volumeInfo.title}</h3>
-          <img src={book.volumeInfo.imageLinks.smallThumbnail} alt="" />
-          <p>{book.volumeInfo.categories}</p>
-          <p>{book.volumeInfo.authors}</p>
-        </div>
-      ))}
+    <div className="max-w-7xl mx-auto">
+      <div className="text-center font-bold mt-3">Found {books.totalItems} results</div>
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-5">
+        {books.items.map(book => (
+          <div className="bg-stone-300">
+            <div className="grid place-items-center pt-3">
+              <img
+                className="shadow-md shadow-black"
+                src={book.volumeInfo.imageLinks.smallThumbnail}
+                alt=""
+              />
+            </div>
+            <div className="px-3 py-2">
+              <p className="text-xs underline text-slate-400 text-left">
+                {book.volumeInfo.categories}
+              </p>
+              <h4 className="font-bold">{book.volumeInfo.title}</h4>
+              <p>{book.volumeInfo.authors}</p>
+            </div>
+          </div>
+        ))}{' '}
+      </div>
     </div>
   );
 }
