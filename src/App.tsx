@@ -12,13 +12,17 @@ function App() {
   const [books, setBooks] = useState<APIResponse | undefined>(undefined);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('relevance');
+  const [orderBy, setOrderBy] = useState('relevance');
   const [isLoading, setIsLoading] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
-    fetch(`https://www.googleapis.com/books/v1/volumes?q=${search}&key=${apiKey}`)
+    fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=intitle:${search}+${
+        category !== 'all' ? `subject:${category}` : ''
+      }&orderBy=${orderBy}&key=${apiKey}`,
+    )
       .then(response => response.json())
       .then(data => setBooks(data))
       .finally(() => setIsLoading(false));
@@ -56,7 +60,7 @@ function App() {
               value={category}
               onChange={e => setCategory(e.target.value)}
             >
-              <option value="all">all</option>
+              <option value="all">All</option>
               <option value="art">Art</option>
               <option value="biography">Biography</option>
               <option value="computers">Computers</option>
@@ -71,8 +75,8 @@ function App() {
             <select
               className="rounded py-1 w-40 cursor-pointer"
               id="sortBy"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
+              value={orderBy}
+              onChange={e => setOrderBy(e.target.value)}
             >
               <option value="relevance">relevance</option>
               <option value="newest">newest</option>
@@ -80,7 +84,7 @@ function App() {
           </div>
         </form>
       </header>
-      {books && <Books books={books} />}
+      {books && (books.totalItems === 0 ? <NotFound /> : <Books books={books} />)}
       {isLoading && (
         <div className="flex-grow grid place-items-center">
           <div className="loader"></div>
@@ -96,7 +100,7 @@ function Books({ books }: { books: APIResponse }) {
       <div className="text-center font-bold mt-3">Found {books.totalItems} results</div>
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-5">
         {books.items.map(book => (
-          <div className="bg-stone-300">
+          <div key={book.id} className="bg-stone-300">
             <div className="grid place-items-center pt-3">
               <img
                 className="shadow-md shadow-black"
@@ -114,6 +118,14 @@ function Books({ books }: { books: APIResponse }) {
           </div>
         ))}{' '}
       </div>
+    </div>
+  );
+}
+
+function NotFound() {
+  return (
+    <div>
+      <h2>Книги не найдены!</h2>
     </div>
   );
 }
