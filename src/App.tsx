@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { APIResponse, APIResponseItem } from './types';
+import { APIResponse, Book } from './types';
 import './App.css';
 import { Routes, Route, Link, useParams } from 'react-router-dom';
 
@@ -18,7 +18,7 @@ function App() {
   const startIndexRef = React.useRef(0);
   const maxResults = 10;
 
-  function fetchBooks() {
+  function fetchBooks({ loadMore = false }: { loadMore?: boolean } = {}) {
     setIsLoading(true);
     fetch(
       `https://www.googleapis.com/books/v1/volumes?q=intitle:${search}+${
@@ -28,7 +28,13 @@ function App() {
       }&maxResults=${maxResults}&key=${apiKey}`,
     )
       .then(response => response.json())
-      .then(data => setPages(pages => [...pages, data]))
+      .then(data => {
+        if (loadMore) {
+          setPages(pages => [...pages, data]);
+        } else {
+          setPages([data]);
+        }
+      })
       .finally(() => setIsLoading(false));
   }
 
@@ -39,7 +45,7 @@ function App() {
 
   function handleLoadMore() {
     startIndexRef.current += maxResults;
-    fetchBooks();
+    fetchBooks({ loadMore: true });
   }
 
   return (
@@ -61,7 +67,7 @@ function App() {
             <MainPage pages={pages} isLoading={isLoading} onLoadMore={handleLoadMore} />
           }
         />
-        <Route path="/:bookId" element={<DetailPage pages={pages} />} />
+        <Route path="/:bookId" element={<DetailPage />} />
       </Routes>
     </div>
   );
@@ -76,23 +82,27 @@ function MainPage({
   isLoading: boolean;
   onLoadMore: () => void;
 }) {
+  const books: Book[] = pages.reduce<Book[]>(
+    (all, next) => (next.items ? all.concat(next.items) : all),
+    [],
+  );
+
   return (
     <>
-      {pages[0] && (
+      {pages.length > 0 && (
         <div className="text-center font-bold mt-3">
           Found {pages[0].totalItems} results
         </div>
       )}
-      {pages.map((books, i) => (
-        <React.Fragment key={i}>
-          {books && (books.totalItems === 0 ? <NotFound /> : <Books books={books} />)}
-        </React.Fragment>
-      ))}
+
+      <Books books={books} />
+
       {isLoading && (
         <div className="flex-grow grid place-items-center">
           <div className="loader"></div>
         </div>
       )}
+
       {pages.length > 0 && pages[0].totalItems !== 0 && (
         <div className="flex justify-center mt-5">
           <button
@@ -108,15 +118,8 @@ function MainPage({
   );
 }
 
-type APIResponseError = {
-  error: {
-    code: number;
-    message: string;
-  };
-};
-
-function DetailPage({ pages }: { pages: APIResponse[] }) {
-  const [book, setBook] = useState<APIResponseItem | undefined>(undefined);
+function DetailPage() {
+  const [book, setBook] = useState<Book | undefined>(undefined);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { bookId } = useParams();
@@ -149,7 +152,6 @@ function DetailPage({ pages }: { pages: APIResponse[] }) {
   // typescript -_-
   if (book === undefined) return null;
 
-  // show success
   return (
     <div className="flex flex-row gap-10 justify-center items-center">
       <div>
@@ -242,11 +244,11 @@ function Header({
   );
 }
 
-function Books({ books }: { books: APIResponse }) {
+function Books({ books }: { books: Book[] }) {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-5">
-        {books.items.map((book, i) => (
+        {books.map((book, i) => (
           <div key={book.id + '_' + i} className="bg-stone-300">
             <div className="grid place-items-center pt-3">
               <Link to={book.id}>
@@ -267,14 +269,6 @@ function Books({ books }: { books: APIResponse }) {
           </div>
         ))}{' '}
       </div>
-    </div>
-  );
-}
-
-function NotFound() {
-  return (
-    <div className="flex justify-center mt-5 font-bold text-red-500">
-      <h2>Книги не найдены!</h2>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 export type APIResponse = {
   totalItems: number;
-  items: APIResponseItem[];
+  items?: Book[];
 };
 
-export type APIResponseItem = {
+export type Book = {
   id: string;
   volumeInfo: {
     title: string;
