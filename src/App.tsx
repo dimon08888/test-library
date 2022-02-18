@@ -180,11 +180,11 @@ function DetailPage() {
       ) : (
         <div className="w-56 h-80 bg-slate-200"></div>
       )}
-      <div>
-        <div className="font-bold mb-4 max-w-sm">{book.volumeInfo.categories}</div>
+      <div className="max-w-md">
+        <div className="font-bold mb-4 ">{book.volumeInfo.categories}</div>
         <div className="font-bold mb-4">{book.volumeInfo.title}</div>
         <div className="font-bold mb-4">{book.volumeInfo.authors}</div>
-        <div className="max-w-xl border-2 border-solid border-black px-3 py-3 bg-stone-100">
+        <div className="border-2 border-solid border-black px-3 py-3 bg-stone-100 break-words">
           {book.volumeInfo.description}
         </div>
       </div>
