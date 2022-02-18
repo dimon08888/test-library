@@ -9,6 +9,8 @@ if (!apiKey) {
   throw new Error('REACT_APP_GOOGLE_API_KEY must be set');
 }
 
+const MAX_RESULTS = 10;
+
 function App() {
   const [pages, setPages] = useState<APIResponse[]>([]);
   const [search, setSearch] = useState('');
@@ -16,7 +18,6 @@ function App() {
   const [orderBy, setOrderBy] = useState('relevance');
   const [isLoading, setIsLoading] = useState(false);
   const startIndexRef = React.useRef(0);
-  const maxResults = 10;
 
   function fetchBooks({ loadMore = false }: { loadMore?: boolean } = {}) {
     setIsLoading(true);
@@ -25,7 +26,7 @@ function App() {
         category !== 'all' ? `subject:${category}` : ''
       }&orderBy=${orderBy}&startIndex=${
         startIndexRef.current
-      }&maxResults=${maxResults}&key=${apiKey}`,
+      }&maxResults=${MAX_RESULTS}&key=${apiKey}`,
     )
       .then(response => response.json())
       .then(data => {
@@ -44,7 +45,7 @@ function App() {
   }
 
   function handleLoadMore() {
-    startIndexRef.current += maxResults;
+    startIndexRef.current += MAX_RESULTS;
     fetchBooks({ loadMore: true });
   }
 
@@ -53,11 +54,20 @@ function App() {
       <Header
         onSubmit={handleSubmit}
         search={search}
-        setSearch={setSearch}
+        setSearch={value => {
+          startIndexRef.current = 0;
+          setSearch(value);
+        }}
         category={category}
-        setCategory={setCategory}
+        setCategory={value => {
+          startIndexRef.current = 0;
+          setCategory(value);
+        }}
         orderBy={orderBy}
-        setOrderBy={setOrderBy}
+        setOrderBy={value => {
+          startIndexRef.current = 0;
+          setOrderBy(value);
+        }}
       />
 
       <Routes>
@@ -87,6 +97,12 @@ function MainPage({
     [],
   );
 
+  // console.log('books', books);
+  // console.log('pages', pages);
+  const isLastPage =
+    pages[pages.length - 1]?.totalItems > 0 &&
+    pages[pages.length - 1]?.items === undefined;
+
   return (
     <>
       {pages.length > 0 && (
@@ -103,17 +119,20 @@ function MainPage({
         </div>
       )}
 
-      {pages.length > 0 && pages[0].totalItems !== 0 && (
-        <div className="flex justify-center mt-5">
-          <button
-            className="bg-neutral-500 hover:bg-neutral-400 rounded px-5 py-3 font-bold transition-colors duration-500"
-            onClick={onLoadMore}
-            disabled={isLoading}
-          >
-            Load more
-          </button>
-        </div>
-      )}
+      {pages.length > 0 &&
+        pages[0].totalItems !== 0 &&
+        pages[0].totalItems > MAX_RESULTS &&
+        !isLastPage && (
+          <div className="flex justify-center mt-5">
+            <button
+              className="bg-neutral-500 hover:bg-neutral-400 rounded px-5 py-3 font-bold transition-colors duration-500"
+              onClick={onLoadMore}
+              disabled={isLoading}
+            >
+              Load more
+            </button>
+          </div>
+        )}
     </>
   );
 }
@@ -154,9 +173,13 @@ function DetailPage() {
 
   return (
     <div className="flex flex-row gap-10 justify-center items-center">
-      <div>
-        <img className="w-56 h-80" src={book.volumeInfo.imageLinks.thumbnail} alt="" />
-      </div>
+      {book.volumeInfo.imageLinks ? (
+        <div>
+          <img className="w-56 h-80" src={book.volumeInfo.imageLinks.thumbnail} alt="" />
+        </div>
+      ) : (
+        <div className="w-56 h-80 bg-slate-200"></div>
+      )}
       <div>
         <div className="font-bold mb-4">{book.volumeInfo.categories}</div>
         <div className="font-bold mb-4">{book.volumeInfo.title}</div>
@@ -250,20 +273,28 @@ function Books({ books }: { books: Book[] }) {
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-5">
         {books.map((book, i) => (
           <div key={book.id + '_' + i} className="bg-stone-300">
-            <div className="grid place-items-center pt-3">
-              <Link to={book.id}>
+            {book.volumeInfo.imageLinks ? (
+              <div className="grid place-items-center pt-3">
                 <img
                   className="shadow-md shadow-black h-40 w-28"
                   src={book.volumeInfo.imageLinks.smallThumbnail}
                   alt=""
                 />
-              </Link>
-            </div>
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div className=" mt-3 h-40 w-28 bg-slate-200"></div>
+              </div>
+            )}
+
             <div className="px-3 py-2">
               <p className="text-xs underline text-slate-400 text-left">
                 {book.volumeInfo.categories}
               </p>
-              <h4 className="font-bold">{book.volumeInfo.title}</h4>
+              <Link to={book.id}>
+                <h4 className="font-bold">{book.volumeInfo.title}</h4>
+              </Link>
+
               <p>{book.volumeInfo.authors}</p>
             </div>
           </div>

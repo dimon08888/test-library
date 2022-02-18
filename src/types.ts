@@ -10,7 +10,7 @@ export type Book = {
     authors: string[];
     description: string;
     categories: string[];
-    imageLinks: {
+    imageLinks?: {
       smallThumbnail: string;
       thumbnail: string;
     };
